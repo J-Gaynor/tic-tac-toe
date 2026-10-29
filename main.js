@@ -60,7 +60,8 @@ const gameFlow = (() => {
         const board = gameboard.getBoard();
 
         for (let i = 0; i < board.length; i++) {
-            if ((board[i] === "X" || board[i] === "O") && board[i] === board[i + 1] && board[i] === board[i + 2]) {
+            if ((board[i] !== undefined) && ((board[i] === board[i + 1] && board[i] === board[i + 2]) || (board[i] === board[i + 3] && board[i] === board[i + 6]))) {
+                console.log(board[i])
                 return `${player} wins!`;
             }
         }
@@ -81,9 +82,9 @@ const gameFlow = (() => {
 console.log(gameboard.getBoard());
 console.log(gameFlow.takeTurn(0));
 console.log(gameFlow.takeTurn(8));
-console.log(gameFlow.takeTurn(1));
+console.log(gameFlow.takeTurn(3));
 console.log(gameFlow.takeTurn(7));
-console.log(gameFlow.takeTurn(2));
+console.log(gameFlow.takeTurn(6));
 console.log(gameFlow.resetGame());
 console.log(gameboard.getBoard());
 // console.log(gameFlow.takeTurn(6));
