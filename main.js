@@ -41,23 +41,21 @@ const gameFlow = (() => {
         return turnCount++;
     };
 
+    const currentPlayer = () => {
+        if (turnCount % 2 === 0) {
+            return player1;
+        } else {
+            return player2;
+        }
+    };
+
     const takeTurn = (cell) => {
         if (finished) {
             return "Start a new game to keep playing";
         }
-        let currentPlayer;
         let marker;
-        if (turnCount % 2 === 0) {
-            currentPlayer = player1.name;
-            marker = player1.marker;
-        } else {
-            currentPlayer = player2.name;
-            marker = player2.marker;
-        }
         gameboard.setCell(cell, marker);
-        turnCount++;
-        return checkWin(currentPlayer);
-
+        return checkWin(currentPlayer());
     };
 
     const checkWin = (player) => {
@@ -78,7 +76,7 @@ const gameFlow = (() => {
 
     const checkHorizontal = (board) => {
         for (let i = 0; i < board.length; i++) {
-            if ((board[i] !== undefined) && (board[i] === board[i + 1] && board[i] === board[i + 2])) {
+            if ((board[i] !== undefined) && (board[i] === board[i + 1] && board[i] === board[i + 2] && board[i + 3] % 3 === 0)) {
                 return true;
             }
         }
@@ -104,20 +102,37 @@ const gameFlow = (() => {
         gameboard.resetBoard();
     }
 
-    return { incrementTurn, takeTurn, checkWin, resetGame }
+    return { takeTurn, checkWin, resetGame, currentPlayer, incrementTurn }
 })();
 
-console.log(gameboard.getBoard());
-console.log(gameFlow.takeTurn(0));
-console.log(gameFlow.takeTurn(6));
-console.log(gameFlow.takeTurn(4));
-console.log(gameFlow.takeTurn(7));
-console.log(gameFlow.takeTurn(8));
-console.log(gameFlow.takeTurn(2));
-console.log(gameFlow.resetGame());
-console.log(gameFlow.takeTurn(2));
-console.log(gameboard.getBoard());
-
 // Display/DOM Object
+const displayBoard = (() => {
+    let container = document.querySelector(".container");
+
+    const makeBoard = () => {
+        const boardLength = gameboard.getBoard().length;
+        console.log(boardLength)
+        for (let i = 0; i < boardLength; i++) {
+            let cell = document.createElement("div");
+            cell.classList.add("cell");
+            cell.value = i;
+            container.appendChild(cell);
+        }
+        let cells = document.querySelectorAll(".cell");
+        cells.forEach(cell => cell.addEventListener("click", e => showMark(e.target)));
+    }
+
+    const showMark = (cell) => {
+        gameFlow.takeTurn(cell)
+        if (cell.textContent === "") {
+            cell.textContent = gameFlow.currentPlayer().marker;
+            gameFlow.incrementTurn();
+        }
+    }
+
+    return { makeBoard, showMark }
+})();
+
+displayBoard.makeBoard();
 
 // Clean up interface - usernames, restart, results etc.
