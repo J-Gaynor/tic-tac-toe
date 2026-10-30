@@ -26,11 +26,9 @@ const gameboard = (() => {
 function Player(name, marker) {
     this.name = name;
     this.marker = marker;
-    return { name, marker };
+    this.wins = 0;
+    return { name, marker, wins };
 }
-
-const player1 = Player("A", "X");
-const player2 = Player("B", "O");
 
 // Game Flow Object
 const gameFlow = (() => {
@@ -63,17 +61,18 @@ const gameFlow = (() => {
 
     const checkWin = () => {
         const board = gameboard.getBoard();
+        let startBtn = document.querySelector(".start-btn");
 
         for (let i = 0; i < board.length; i++) {
             if (checkHorizontal(board) || checkVertical(board) || checkDiagonal(board)) {
                 finished = true;
+                startBtn.classList.toggle("hidden");
                 return "win";
             }
         }
 
-        console.log(board)
-
         if (!board.includes(undefined)) {
+            startBtn.classList.toggle("hidden");
             finished = true;
             return "tie";
         }
@@ -140,25 +139,85 @@ const displayBoard = (() => {
         let playerMarker = currentPlayer.marker;
         const result = gameFlow.takeTurn(cell.target.value, playerMarker);
         if (result === "win") {
-            alert(`${currentPlayer.name} wins!`);
+            currentPlayer.wins++;
+            ui.setMessage(`${currentPlayer.name} wins!`);
         } else if (result === "tie") {
-            alert("It's a tie! Press 'r' to replay.")
+            ui.setMessage("It's a tie!");
         };
     }
     return { makeBoard, showMark }
 })();
 
+const player1 = Player("Player 1", "X");
+const player2 = Player("Player 2", "O");
+
 // Clean up interface - usernames, restart, results etc.
 const ui = (() => {
+    let message = "";
+
+    const setMessage = (msg) => {
+        message = msg;
+        playerList();
+    };
+
     const playerList = () => {
         const playerSection = document.querySelector(".players-container");
+        playerSection.replaceChildren();
+        const player1Div = document.createElement("div");
+        const player2Div = document.createElement("div");
+        player1Div.classList.add("playerDiv");
+        player2Div.classList.add("playerDiv");
+
+        const player1Header = document.createElement("div");
+        player1Header.classList.add("player-header");
+        const player1Name = document.createElement("p");
+        const player1EditBtn = document.createElement("button");
+        const player1Wins = document.createElement("p");
+        player1Name.textContent = player1.name;
+        player1EditBtn.textContent = "✏️";
+        player1EditBtn.classList.add("edit-btn");
+        player1Wins.textContent = `Wins: ${player1.wins}`;
+
+        player1Header.appendChild(player1Name);
+        player1Header.appendChild(player1EditBtn);
+        player1Div.appendChild(player1Header);
+        player1Div.appendChild(player1Wins);
+
+        player1EditBtn.addEventListener("click", () => { setName(player1) });
+
+        const player2Header = document.createElement("div");
+        player2Header.classList.add("player-header");
+        const player2Name = document.createElement("p");
+        const player2EditBtn = document.createElement("button");
+        const player2Wins = document.createElement("p");
+        player2Name.textContent = player2.name;
+        player2EditBtn.textContent = "✏️";
+        player2EditBtn.classList.add("edit-btn");
+        player2Wins.textContent = `Wins: ${player2.wins}`;
+
+        player2Header.appendChild(player2Name);
+        player2Header.appendChild(player2EditBtn);
+        player2Div.appendChild(player2Header);
+        player2Div.appendChild(player2Wins);
+
+        playerSection.appendChild(player1Div);
+        playerSection.appendChild(player2Div);
+
+        if (message) {
+            const resultMsg = document.createElement("p");
+            resultMsg.classList.add("result-message");
+            resultMsg.textContent = message;
+            playerSection.appendChild(resultMsg);
+        }
+
+        player2EditBtn.addEventListener("click", () => { setName(player2) });
     }
 
     const rules = () => {
         const playerSection = document.querySelector(".rules-container");
-        const startBtn = document.createElement("btn");
+        const startBtn = document.createElement("button");
         const rules = document.createElement("p");
-        startBtn.classList.add("startBtn");
+        startBtn.classList.add("start-btn");
 
         startBtn.textContent = "START GAME";
         rules.textContent = `Welcome to Tic Tac Toe! The classic game you know and love. \n
@@ -169,11 +228,27 @@ const ui = (() => {
         playerSection.appendChild(rules);
         playerSection.appendChild(startBtn);
 
-        startBtn.addEventListener("click", () => gameFlow.startGame());
+        startBtn.addEventListener("click", () => {
+            startBtn.classList.toggle("hidden");
+            startBtn.textContent = "PLAY AGAIN";
+            gameFlow.resetGame();
+            displayBoard.makeBoard();
+            gameFlow.startGame();
+            setMessage("");
+        });
     }
 
-    return { playerList, rules }
+    const setName = (player) => {
+        const newName = prompt("Player name:");
+        if (newName && newName.trim() !== "") {
+            player.name = newName.trim();
+            playerList();
+        }
+    }
+
+    return { playerList, rules, setMessage }
 })();
 
 displayBoard.makeBoard();
 ui.rules();
+ui.playerList();
