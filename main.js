@@ -9,8 +9,8 @@ const gameboard = (() => {
     const setCell = (cell, marker) => {
         if (!board[cell]) {
             board[cell] = marker;
-            return board;
-        } return `This cell already contains an ${board[cell]}.`
+            return true;
+        } return false
     }
 
     const resetBoard = () => {
@@ -35,7 +35,7 @@ const player2 = Player("B", "O");
 // Game Flow Object
 const gameFlow = (() => {
     let turnCount = 0;
-    let finished = false;
+    let finished = true;
 
     const incrementTurn = () => {
         return turnCount++;
@@ -49,34 +49,39 @@ const gameFlow = (() => {
         }
     };
 
-    const takeTurn = (cell) => {
+    const takeTurn = (cell, marker) => {
+        console.log(finished)
         if (finished) {
             return "Start a new game to keep playing";
         }
-        let marker;
-        gameboard.setCell(cell, marker);
-        return checkWin(currentPlayer());
+        if (gameboard.setCell(cell, marker) === true) {
+            incrementTurn();
+            displayBoard.makeBoard();
+            return checkWin(currentPlayer());
+        };
     };
 
-    const checkWin = (player) => {
+    const checkWin = () => {
         const board = gameboard.getBoard();
 
         for (let i = 0; i < board.length; i++) {
             if (checkHorizontal(board) || checkVertical(board) || checkDiagonal(board)) {
                 finished = true;
-                return `${player} wins! Press 'r' to replay.`;
+                return "win";
             }
         }
 
+        console.log(board)
+
         if (!board.includes(undefined)) {
             finished = true;
-            return "It's a tie! Press 'r' to replay.";
+            return "tie";
         }
     }
 
     const checkHorizontal = (board) => {
         for (let i = 0; i < board.length; i++) {
-            if ((board[i] !== undefined) && (board[i] === board[i + 1] && board[i] === board[i + 2] && board[i + 3] % 3 === 0)) {
+            if ((board[i] !== undefined) && (board[i] === board[i + 1] && board[i] === board[i + 2] && i + 3 % 3 === 0)) {
                 return true;
             }
         }
@@ -102,7 +107,11 @@ const gameFlow = (() => {
         gameboard.resetBoard();
     }
 
-    return { takeTurn, checkWin, resetGame, currentPlayer, incrementTurn }
+    const startGame = () => {
+        finished = false;
+    }
+
+    return { takeTurn, checkWin, resetGame, currentPlayer, incrementTurn, startGame }
 })();
 
 // Display/DOM Object
@@ -110,29 +119,61 @@ const displayBoard = (() => {
     let container = document.querySelector(".container");
 
     const makeBoard = () => {
-        const boardLength = gameboard.getBoard().length;
-        console.log(boardLength)
+        container.replaceChildren();
+        const board = gameboard.getBoard();
+        const boardLength = board.length;
+
         for (let i = 0; i < boardLength; i++) {
             let cell = document.createElement("div");
             cell.classList.add("cell");
             cell.value = i;
+            cell.textContent = board[i]
             container.appendChild(cell);
         }
+
         let cells = document.querySelectorAll(".cell");
-        cells.forEach(cell => cell.addEventListener("click", e => showMark(e.target)));
+        cells.forEach(cell => cell.addEventListener("click", e => showMark(e)));
     }
 
     const showMark = (cell) => {
-        gameFlow.takeTurn(cell)
-        if (cell.textContent === "") {
-            cell.textContent = gameFlow.currentPlayer().marker;
-            gameFlow.incrementTurn();
-        }
+        let currentPlayer = gameFlow.currentPlayer();
+        let playerMarker = currentPlayer.marker;
+        const result = gameFlow.takeTurn(cell.target.value, playerMarker);
+        if (result === "win") {
+            alert(`${currentPlayer.name} wins!`);
+        } else if (result === "tie") {
+            alert("It's a tie! Press 'r' to replay.")
+        };
     }
-
     return { makeBoard, showMark }
 })();
 
-displayBoard.makeBoard();
-
 // Clean up interface - usernames, restart, results etc.
+const ui = (() => {
+    const playerList = () => {
+        const playerSection = document.querySelector(".players-container");
+    }
+
+    const rules = () => {
+        const playerSection = document.querySelector(".rules-container");
+        const startBtn = document.createElement("btn");
+        const rules = document.createElement("p");
+        startBtn.classList.add("startBtn");
+
+        startBtn.textContent = "START GAME";
+        rules.textContent = `Welcome to Tic Tac Toe! The classic game you know and love. \n
+        Player 1 (X) and Player 2 (O) will take turns placing their markers on the grid.
+        Markers can only be placed in empty tiles. A player wins by placing three of their
+        markers in a row, either vertically, horizontally or diagonally. Super easy! \n`
+
+        playerSection.appendChild(rules);
+        playerSection.appendChild(startBtn);
+
+        startBtn.addEventListener("click", () => gameFlow.startGame());
+    }
+
+    return { playerList, rules }
+})();
+
+displayBoard.makeBoard();
+ui.rules();

@@ -7,9 +7,11 @@
 }
 
 body {
-    display: flex;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    justify-content: space-around;
     align-items: center;
+    width: 100vw;
     height: 100vh;
 }
 
@@ -20,6 +22,7 @@ body {
     grid-template: repeat(3, 1fr) / repeat(3, 1fr);
     gap: 1rem;
     background-color: white;
+    justify-self: center;
 }
 
 .cell {
@@ -31,4 +34,30 @@ body {
     background-color: darkblue;
     aspect-ratio: 1;
     width: 100%;
+}
+
+.players-container {}
+
+.rules-container {
+    padding-right: 2rem;
+    width: 100%;
+    display: grid;
+    gap: 1rem;
+}
+
+.rules-container>* {
+    font-size: 1.5rem;
+}
+
+.startBtn {
+    background-color: rgb(17, 255, 0);
+    color: white;
+    border: 2px solid black;
+    border-radius: 20px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.startBtn:hover {
+    cursor: pointer;
 }
